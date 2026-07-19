@@ -267,6 +267,8 @@ body {
 }
 .square.selected {
     background-color: var(--selected-bg);
+    box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.35);
+    z-index: 2;
 }
 .square.valid-move::before {
     content: '';
@@ -291,6 +293,7 @@ body {
 }
 .square.last-move {
     background-color: var(--last-move-bg) !important;
+    box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.2);
 }
 .square.check {
     background-color: #ff6b6b !important;
@@ -306,9 +309,11 @@ body {
 }
 .square.hint-from {
     background-color: var(--hint-from-bg) !important;
+    box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.25);
 }
 .square.hint-to {
     background-color: var(--hint-to-bg) !important;
+    box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.25);
 }
 .piece {
     width: 100%;
@@ -390,6 +395,44 @@ body {
 }
 .control-icon.disabled:hover {
     background-color: transparent;
+}
+/* Pi coin icon + purple branding for the Refill button */
+.pi-coin-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #8247e5, #5b2c99);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-weight: bold;
+    font-size: 17px;
+    margin-bottom: 5px;
+    box-shadow: 0 2px 5px rgba(91, 44, 153, 0.4);
+}
+#refill-btn span {
+    color: #6a2fb0;
+    font-weight: 600;
+}
+/* Pulses to grab attention once every feature is fully depleted, nudging
+   the player toward using the Pi payment refill. */
+@keyframes refillPulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(130, 71, 229, 0.55);
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 0 0 10px rgba(130, 71, 229, 0);
+        transform: scale(1.08);
+    }
+}
+#refill-btn.attention .pi-coin-icon {
+    animation: refillPulse 1.4s ease-in-out infinite;
+}
+#refill-btn.attention span {
+    animation: refillPulse 1.4s ease-in-out infinite;
 }
 .modal {
     display: none;
