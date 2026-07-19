@@ -409,10 +409,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const refillButton = document.getElementById('refill-btn');
         if (!refillButton) return;
        
-        if (userSettings.hints <= 0 && userSettings.undos <= 0 && userSettings.threats <= 0 && userSettings.extraTime <= 0) {
+        const allDepleted = userSettings.hints <= 0 && userSettings.undos <= 0 && userSettings.threats <= 0 && userSettings.extraTime <= 0;
+
+        if (allDepleted) {
             refillButton.classList.remove('disabled');
+            refillButton.classList.add('attention');
         } else {
             refillButton.classList.add('disabled');
+            refillButton.classList.remove('attention');
         }
     }
    
