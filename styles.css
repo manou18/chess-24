@@ -3,7 +3,6 @@
     --light-square-bg: #f0d9b5;
     --dark-square-bg: #b58863;
     --selected-bg: #fff176;
-    --valid-move-bg: #90ee90;
     --last-move-bg: #ffa;
     --threatened-bg: #ff6b6b;
     --protected-bg: #6b8eff;
@@ -271,21 +270,23 @@ body {
 .square.valid-move::before {
     content: '';
     position: absolute;
-    width: 20px;
-    height: 20px;
+    width: 24%;
+    height: 24%;
     border-radius: 50%;
-    background-color: var(--valid-move-bg);
-    opacity: 0.7;
+    background-color: rgba(20, 20, 20, 0.5);
+    opacity: 1;
+    pointer-events: none;
 }
 .square.capture-move::before {
     content: '';
     position: absolute;
-    width: 100%;
-    height: 100%;
+    width: 86%;
+    height: 86%;
     border-radius: 50%;
     background-color: transparent;
-    border: 5px solid var(--valid-move-bg);
+    border: 4px solid rgba(20, 20, 20, 0.5);
     box-sizing: border-box;
+    pointer-events: none;
 }
 .square.last-move {
     background-color: var(--last-move-bg) !important;
@@ -616,21 +617,27 @@ body {
     z-index: 20;
     position: relative;
 }
-.player-info {
+.side-indicator {
     display: flex;
     align-items: center;
+    justify-content: center;
+    gap: 8px;
     font-weight: bold;
     font-size: 14px;
     color: #2c3e50;
-    z-index: 1;
+    background-color: white;
+    border-radius: 10px;
+    padding: 6px 14px;
+    margin: 6px auto;
+    max-width: 550px;
+    width: fit-content;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    opacity: 0.55;
+    transition: opacity 0.25s ease, box-shadow 0.25s ease;
 }
-.player-info:last-child {
-    margin-left: auto; 
-    flex-direction: row-reverse; 
-}
-.player-info:last-child .player-color-indicator {
-    margin-right: 0;
-    margin-left: 10px;
+.side-indicator.active {
+    opacity: 1;
+    box-shadow: 0 3px 12px rgba(43, 112, 197, 0.35);
 }
 .top-controls {
     display: flex;
@@ -641,7 +648,7 @@ body {
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    margin-right: 10px;
+    margin-right: 0;
 }
 .player-white {
     background-color: #f0d9b5;
