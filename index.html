@@ -122,18 +122,22 @@
                         </div>
                     </div>
                     <div class="game-status" id="game-status"></div>
-                    <!-- Bot (Black) indicator - sits directly above the board -->
-                    <div class="side-indicator" id="bot-indicator">
-                        <div class="player-color-indicator player-black"></div>
-                        <span id="bot-text">Bot AI</span>
+                    <!-- Bot (Black) indicator - sits directly above the board, left-aligned with it -->
+                    <div class="side-indicator-row" id="bot-indicator">
+                        <div class="side-indicator-pill">
+                            <div class="player-color-indicator player-black"></div>
+                            <span id="bot-text">Bot AI</span>
+                        </div>
                     </div>
                     <div class="board-container">
                         <div class="chessboard" id="chessboard"></div>
                     </div>
-                    <!-- White (You) indicator - sits directly below the board -->
-                    <div class="side-indicator" id="white-player-indicator">
-                        <div class="player-color-indicator player-white"></div>
-                        <span id="player-text">Guest</span>
+                    <!-- White (You) indicator - sits directly below the board, left-aligned with it -->
+                    <div class="side-indicator-row" id="white-player-indicator">
+                        <div class="side-indicator-pill">
+                            <div class="player-color-indicator player-white"></div>
+                            <span id="player-text">Guest</span>
+                        </div>
                     </div>
                     <div class="controls-bottom">
                         <div class="control-icon" id="hint-btn" role="button" tabindex="0" aria-label="Get a hint">
