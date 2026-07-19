@@ -39,12 +39,12 @@
                 <div class="option-card" data-theme="green">
                     <i class="fas fa-leaf option-icon"></i>
                     <div class="option-name">Green</div>
-                    <div class="option-desc">Chess.com Style</div>
+                    <div class="option-desc">Fresh Green</div>
                 </div>
                 <div class="option-card" data-theme="pink">
                     <i class="fas fa-heart option-icon"></i>
                     <div class="option-name">Pink</div>
-                    <div class="option-desc">Lichess Style</div>
+                    <div class="option-desc">Soft Rose</div>
                 </div>
                 <div class="option-card" data-theme="blue">
                     <i class="fas fa-water option-icon"></i>
@@ -103,11 +103,10 @@
         <div class="page game-page">
             <div class="container">
                 <main class="game-container">
-                    <!-- Game info container with player info and timer -->
+                    <!-- Game info container: mute (left), timer (center), help icons (right) -->
                     <div class="game-info-container">
-                        <div class="player-info">
-                            <div class="player-color-indicator player-white"></div>
-                            <span id="player-text">White's Turn</span>
+                        <div class="control-icon" id="mute-btn" role="button" tabindex="0" aria-label="Mute sounds">
+                            <i class="fas fa-volume-up" id="mute-icon"></i>
                         </div>
                         <div class="game-timer">
                             <div class="game-timer-label">Time Left</div>
@@ -123,8 +122,18 @@
                         </div>
                     </div>
                     <div class="game-status" id="game-status"></div>
+                    <!-- Bot (Black) indicator - sits directly above the board -->
+                    <div class="side-indicator" id="bot-indicator">
+                        <div class="player-color-indicator player-black"></div>
+                        <span id="bot-text">Bot AI</span>
+                    </div>
                     <div class="board-container">
                         <div class="chessboard" id="chessboard"></div>
+                    </div>
+                    <!-- White (You) indicator - sits directly below the board -->
+                    <div class="side-indicator" id="white-player-indicator">
+                        <div class="player-color-indicator player-white"></div>
+                        <span id="player-text">White</span>
                     </div>
                     <div class="controls-bottom">
                         <div class="control-icon" id="hint-btn" role="button" tabindex="0" aria-label="Get a hint">
@@ -231,10 +240,10 @@
                         <h3> <i class="fas fa-chess-board"></i> Themes </h3>
                         <p>All board themes are now completely free! You can choose from:</p>
                         <ul class="features-list">
-                            <li> <strong>Classic:</strong> Traditional wooden chess board </li>
-                            <li> <strong>Marble:</strong> Elegant marble design </li>
-                            <li> <strong>Metal:</strong> Modern metal appearance </li>
-                            <li> <strong>Space:</strong> Cosmic space theme </li>
+                            <li> <strong>Brown:</strong> Classic tan wooden board </li>
+                            <li> <strong>Green:</strong> Fresh green board </li>
+                            <li> <strong>Pink:</strong> Soft rose board </li>
+                            <li> <strong>Blue:</strong> Puffy cushioned blue board </li>
                         </ul>
                         <p>To change themes, go back to the theme selection page.</p>
                     </div>
