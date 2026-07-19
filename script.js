@@ -100,6 +100,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentPlayer = 'white';
     let isTimerPaused = false;
     let lowTimeWarned = false;
+    let oneMinuteWarned = false;
+    let refillAttentionShown = false;
    
     // Chess game core variables
     let game = new Chess();
@@ -404,6 +406,39 @@ document.addEventListener('DOMContentLoaded', function() {
         updateFeatureButtonsState();
     }
    
+    // Motivational messages shown next to the Bot AI indicator to nudge the
+    // player toward using the Pi refill. A random one is picked each time,
+    // and it fades away automatically after a few seconds.
+    const PROMO_MESSAGES_DEPLETED = [
+        "0 hints, 0 undos, no extra time left! Recharge now and don't miss out!",
+        "All boosts used up! Refill with Pi to keep your edge 🔥",
+        "Out of hints & undos! Tap Refill to stay in the game 💜",
+        "Features depleted! A quick Pi refill gets you back in action."
+    ];
+    const PROMO_MESSAGES_LOW_TIME = [
+        "⏰ Less than a minute left! Grab extra time now!",
+        "Clock's almost out! Refill for extra time before it's too late ⏳",
+        "Only seconds left — don't let the bot win on time!",
+        "Time's nearly up! One tap of Refill buys you more."
+    ];
+
+    let promoMessageTimer = null;
+    function showPromoMessage(messages) {
+        const promoEl = document.getElementById('promo-message');
+        if (!promoEl) return;
+
+        const text = messages[Math.floor(Math.random() * messages.length)];
+        promoEl.textContent = text;
+
+        // Restart the visible state/timer even if one is already showing.
+        if (promoMessageTimer) clearTimeout(promoMessageTimer);
+        promoEl.classList.add('visible');
+        promoMessageTimer = setTimeout(() => {
+            promoEl.classList.remove('visible');
+            promoMessageTimer = null;
+        }, 5000);
+    }
+   
     // Function to check and update refill button state
     function checkRefillButtonState() {
         const refillButton = document.getElementById('refill-btn');
@@ -414,9 +449,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (allDepleted) {
             refillButton.classList.remove('disabled');
             refillButton.classList.add('attention');
+            if (!refillAttentionShown) {
+                refillAttentionShown = true;
+                showPromoMessage(PROMO_MESSAGES_DEPLETED);
+            }
         } else {
             refillButton.classList.add('disabled');
             refillButton.classList.remove('attention');
+            refillAttentionShown = false;
         }
     }
    
@@ -637,6 +677,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 playerTime += extraMinutes * 60;
                 updateTimerDisplay();
                 if (playerTime > 10) lowTimeWarned = false;
+                if (playerTime >= 60) oneMinuteWarned = false;
 
                 userSettings.extraTime--;
                 document.getElementById('extra-time-count').textContent = userSettings.extraTime;
@@ -1106,6 +1147,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
        
         lowTimeWarned = false;
+        oneMinuteWarned = false;
         updateTimerDisplay();
        
         // Only start timer if not in easy mode
@@ -1132,6 +1174,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     } else {
                         timerDisplayEl.classList.remove('timer-low');
                     }
+                }
+                if (playerTime < 60 && !oneMinuteWarned && playerTime > 0) {
+                    oneMinuteWarned = true;
+                    showPromoMessage(PROMO_MESSAGES_LOW_TIME);
                 }
                 if (playerTime <=10 && !lowTimeWarned && playerTime >0){
                     if (!isMuted) {
