@@ -231,7 +231,8 @@ body {
     overflow: visible;
     position: relative;
     min-height: 0;
-    margin-top: 50px;
+    margin-top: 12px;
+    margin-bottom: 12px;
 }
 .chessboard {
     width: 85vmin;
@@ -620,7 +621,7 @@ body {
 .side-indicator {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 8px;
     font-weight: bold;
     font-size: 14px;
@@ -628,9 +629,10 @@ body {
     background-color: white;
     border-radius: 10px;
     padding: 6px 14px;
-    margin: 6px auto;
+    margin: 0 auto;
+    width: 85vmin;
     max-width: 550px;
-    width: fit-content;
+    box-sizing: border-box;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     opacity: 0.55;
     transition: opacity 0.25s ease, box-shadow 0.25s ease;
@@ -714,6 +716,9 @@ body {
         height: 90vmin;
         font-size: calc(90vmin / 8 * 0.9);
     }
+    .side-indicator {
+        width: 90vmin;
+    }
 /* ---- START OF MODIFICATION ---- */
     .controls-bottom {
         padding: 6px 2px;
@@ -779,6 +784,9 @@ body {
         width: 60vmin;
         height: 60vmin;
     }
+    .side-indicator {
+        width: 60vmin;
+    }
     .game-status {
         height: 30px;
         line-height: 15px;
@@ -786,6 +794,7 @@ body {
     }
     .board-container {
         margin-top: 20px;
+        margin-bottom: 20px;
     }
 }
 @keyframes moveAnimation {
