@@ -119,7 +119,8 @@ document.addEventListener('DOMContentLoaded', function() {
         hints: 1,
         undos: 1,
         threats: 1,
-        extraTime: 1
+        extraTime: 1,
+        soundMuted: false
     };
    
     // Statistics variables
@@ -184,6 +185,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     chooseDifficulty: "Choose Difficulty Level",
                     whitesTurn: "White's Turn",
                     blacksTurn: "Bot AI",
+                    whiteLabel: "White",
                     gameInProgress: "Game in progress",
                     hint: "Hint",
                     undo: "Undo",
@@ -205,6 +207,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     chooseDifficulty: "اختر مستوى الصعوبة",
                     whitesTurn: "دور الأبيض",
                     blacksTurn: "بوت AI",
+                    whiteLabel: "الأبيض",
                     gameInProgress: "اللعبة جارية",
                     hint: "تلميح",
                     undo: "تراجع",
@@ -231,7 +234,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (q('.welcome-subtitle')) q('.welcome-subtitle').innerHTML = i18next.t('welcomeSubtitle');
             if (q('.theme-page .page-title')) q('.theme-page .page-title').innerHTML = i18next.t('chooseTheme');
             if (q('.difficulty-page .page-title')) q('.difficulty-page .page-title').innerHTML = i18next.t('chooseDifficulty');
-            if (document.getElementById('player-text')) document.getElementById('player-text').innerHTML = i18next.t('whitesTurn');
+            if (document.getElementById('bot-text')) document.getElementById('bot-text').innerHTML = i18next.t('blacksTurn');
+            if (document.getElementById('player-text')) document.getElementById('player-text').innerHTML = i18next.t('whiteLabel');
             if (document.getElementById('game-status')) document.getElementById('game-status').innerHTML = i18next.t('gameInProgress');
             if (q('.game-timer-label')) q('.game-timer-label').innerHTML = i18next.t('timeLeft');
 
@@ -593,6 +597,25 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 showCustomAlert("You can only use Refill when all features are depleted.");
             }
+        });
+    }
+   
+    // Function to update the mute button's icon to match the current state
+    function updateMuteIcon() {
+        const muteIcon = document.getElementById('mute-icon');
+        if (!muteIcon) return;
+        muteIcon.classList.remove('fa-volume-up', 'fa-volume-mute');
+        muteIcon.classList.add(isMuted ? 'fa-volume-mute' : 'fa-volume-up');
+    }
+
+    // Setup mute button
+    const muteBtnEl = document.getElementById('mute-btn');
+    if (muteBtnEl) {
+        muteBtnEl.addEventListener('click', function() {
+            isMuted = !isMuted;
+            userSettings.soundMuted = isMuted;
+            updateCurrentSettings();
+            updateMuteIcon();
         });
     }
    
@@ -1140,16 +1163,11 @@ document.addEventListener('DOMContentLoaded', function() {
    
     // Function to update player turn indicator
     function updatePlayerIndicator() {
-        const playerText = document.getElementById('player-text');
-        const colorIndicator = document.querySelector('.player-color-indicator');
-       
-        if (playerText) playerText.textContent = currentPlayer === 'white' ? i18next.t('whitesTurn') : i18next.t('blacksTurn');
-       
-        // Update color indicator
-        if (colorIndicator) {
-            colorIndicator.className = 'player-color-indicator';
-            colorIndicator.classList.add(currentPlayer === 'white' ? 'player-white' : 'player-black');
-        }
+        const botIndicator = document.getElementById('bot-indicator');
+        const whiteIndicator = document.getElementById('white-player-indicator');
+
+        if (botIndicator) botIndicator.classList.toggle('active', currentPlayer === 'black');
+        if (whiteIndicator) whiteIndicator.classList.toggle('active', currentPlayer === 'white');
     }
    
     // Function to switch player and timer
@@ -1550,6 +1568,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 const migratedTheme = themeMigration[parsed.theme] || parsed.theme;
                 userSettings.theme = ['brown', 'green', 'pink', 'blue'].includes(migratedTheme) ? migratedTheme : 'brown';
                 userSettings.difficulty = ['easy', 'medium', 'hard', 'expert'].includes(parsed.difficulty) ? parsed.difficulty : 'medium';
+                userSettings.soundMuted = !!parsed.soundMuted;
+                isMuted = userSettings.soundMuted;
+                updateMuteIcon();
                
                 // Update UI
                 document.querySelectorAll('.option-card').forEach(card => {
