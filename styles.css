@@ -694,6 +694,7 @@ body {
     max-width: 550px;
     margin: 0 auto;
     box-sizing: border-box;
+    overflow: visible;
 }
 /* The actual visible "pill" - sized to fit its own content only. */
 .side-indicator-pill {
@@ -714,6 +715,29 @@ body {
 .side-indicator-row.active .side-indicator-pill {
     opacity: 1;
     box-shadow: 0 3px 12px rgba(43, 112, 197, 0.35);
+}
+/* Motivational promo message that briefly appears next to the Bot AI
+   indicator (e.g. when features run out, or time is almost up). */
+.promo-message {
+    margin-left: 10px;
+    padding: 6px 12px;
+    background: linear-gradient(135deg, #8247e5, #5b2c99);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.3;
+    border-radius: 14px;
+    box-shadow: 0 2px 8px rgba(91, 44, 153, 0.4);
+    opacity: 0;
+    transform: translateY(-4px);
+    pointer-events: none;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    max-width: 65%;
+    overflow-wrap: break-word;
+}
+.promo-message.visible {
+    opacity: 1;
+    transform: translateY(0);
 }
 .top-controls {
     display: flex;
