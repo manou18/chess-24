@@ -1617,7 +1617,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const THEME_PIECE_SET = {
         brown: 'neo',
         green: 'neo',
-        pink: 'cburnett',
+        pink: 'neo',
         blue: 'neo'
     };
 
