@@ -185,7 +185,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     chooseDifficulty: "Choose Difficulty Level",
                     whitesTurn: "White's Turn",
                     blacksTurn: "Bot AI",
-                    whiteLabel: "White",
+                    whiteLabel: "Guest",
                     gameInProgress: "Game in progress",
                     hint: "Hint",
                     undo: "Undo",
@@ -207,7 +207,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     chooseDifficulty: "اختر مستوى الصعوبة",
                     whitesTurn: "دور الأبيض",
                     blacksTurn: "بوت AI",
-                    whiteLabel: "الأبيض",
+                    whiteLabel: "ضيف",
                     gameInProgress: "اللعبة جارية",
                     hint: "تلميح",
                     undo: "تراجع",
@@ -1390,9 +1390,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Update game status
         const gameStatusEl = document.getElementById('game-status');
-        const playerTextEl = document.getElementById('player-text');
         if (gameStatusEl) gameStatusEl.textContent = message;
-        if (playerTextEl) playerTextEl.textContent = "Game Over";
         if (!isMuted) {
             if (message.includes('wins')) {
                 if (actualIsWin) {
