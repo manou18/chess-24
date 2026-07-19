@@ -618,10 +618,21 @@ body {
     z-index: 20;
     position: relative;
 }
-.side-indicator {
+/* Invisible row that spans the exact same width/position as the board,
+   purely so its content can be left-aligned with the board's left edge. */
+.side-indicator-row {
     display: flex;
     align-items: center;
     justify-content: flex-start;
+    width: 85vmin;
+    max-width: 550px;
+    margin: 0 auto;
+    box-sizing: border-box;
+}
+/* The actual visible "pill" - sized to fit its own content only. */
+.side-indicator-pill {
+    display: flex;
+    align-items: center;
     gap: 8px;
     font-weight: bold;
     font-size: 14px;
@@ -629,15 +640,12 @@ body {
     background-color: white;
     border-radius: 10px;
     padding: 6px 14px;
-    margin: 0 auto;
-    width: 85vmin;
-    max-width: 550px;
-    box-sizing: border-box;
+    width: fit-content;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     opacity: 0.55;
     transition: opacity 0.25s ease, box-shadow 0.25s ease;
 }
-.side-indicator.active {
+.side-indicator-row.active .side-indicator-pill {
     opacity: 1;
     box-shadow: 0 3px 12px rgba(43, 112, 197, 0.35);
 }
@@ -716,7 +724,7 @@ body {
         height: 90vmin;
         font-size: calc(90vmin / 8 * 0.9);
     }
-    .side-indicator {
+    .side-indicator-row {
         width: 90vmin;
     }
 /* ---- START OF MODIFICATION ---- */
@@ -784,7 +792,7 @@ body {
         width: 60vmin;
         height: 60vmin;
     }
-    .side-indicator {
+    .side-indicator-row {
         width: 60vmin;
     }
     .game-status {
