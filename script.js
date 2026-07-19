@@ -316,12 +316,10 @@ document.addEventListener('DOMContentLoaded', function() {
             updateCurrentSettings();
             checkRefillButtonState();
 
-            // Prewarm Stockfish as soon as the player picks hard/expert, so
-            // it has extra time to finish loading in the background before
-            // the bot's first move is actually needed (instead of only
-            // starting to load right when it's the bot's turn).
-            if ((userSettings.difficulty === 'hard' || userSettings.difficulty === 'expert')
-                && typeof StockfishEngine !== 'undefined') {
+            // Prewarm Stockfish as soon as a difficulty is picked (all levels
+            // now use it), so it has extra time to finish loading in the
+            // background before the bot's first move is actually needed.
+            if (typeof StockfishEngine !== 'undefined') {
                 try {
                     StockfishEngine.init();
                 } catch (e) {
@@ -2646,10 +2644,13 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     })();
 
-    // NOTE: Stockfish is intentionally NOT started here. It's lazy-loaded
-    // (see makeAIMove below) only the first time a player picks "hard" or
-    // "expert", so easy/medium players never pay the download/CPU cost of
-    // the full engine — they get the lightweight local engine instead.
+    // NOTE: Stockfish is lazy-loaded (see makeAIMove below) — it starts
+    // downloading as soon as a difficulty is picked (or at page load for a
+    // returning player), rather than blocking the very first render.
+    // All difficulty levels (easy through expert) now play through
+    // Stockfish, just at different Skill Levels / think-times. The small
+    // built-in local engine is kept only as an automatic fallback in case
+    // Stockfish is ever unavailable (offline, CDN down, etc.).
 
     // Maps app difficulty levels to Stockfish's Skill Level (0-20) and a
     // thinking-time budget in milliseconds.
@@ -2679,10 +2680,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     let isAIThinking = false;
-    // Function to make the AI (Black) move.
-    // HYBRID STRATEGY: easy/medium use the small built-in engine (instant,
-    // no download, very light on CPU/battery). hard/expert lazy-load real
-    // Stockfish the first time it's needed, for a much stronger opponent.
+    // Function to make the AI (Black) move using Stockfish at a Skill Level
+    // matched to the selected difficulty. Falls back to the lightweight
+    // local engine if Stockfish is unavailable or times out.
     async function makeAIMove() {
         if (game.game_over()) return;
         if (isAIThinking) return; // never run two AI moves concurrently
@@ -2702,52 +2702,40 @@ document.addEventListener('DOMContentLoaded', function() {
         const difficulty = userSettings.difficulty;
         let move = null;
 
-        if (difficulty === 'easy' || difficulty === 'medium') {
-            try {
-                const localMove = getLocalEngineMove(difficulty);
-                if (localMove && boardStillMatches()) {
-                    move = game.move(localMove);
-                }
-            } catch (err) {
-                console.error('Local engine move failed:', err);
+        const settings = STOCKFISH_DIFFICULTY_SETTINGS[difficulty] || STOCKFISH_DIFFICULTY_SETTINGS.medium;
+        try {
+            // Give the engine up to 20s to finish loading (first time only —
+            // the asm.js file can be slow to parse on weaker phones).
+            const ready = await withTimeout(StockfishEngine.init(), 20000, false);
+            if (!ready || !StockfishEngine.isAvailable()) {
+                throw new Error('Stockfish unavailable or timed out while loading');
             }
-        } else {
-            // hard / expert
-            const settings = STOCKFISH_DIFFICULTY_SETTINGS[difficulty] || STOCKFISH_DIFFICULTY_SETTINGS.hard;
+            if (!boardStillMatches()) {
+                throw new Error('Board changed while Stockfish was loading; discarding stale request');
+            }
+            StockfishEngine.setSkillLevel(settings.skill);
+            // Give the search itself a bit more time than requested, then give up.
+            const uciMove = await withTimeout(
+                StockfishEngine.getBestMove(game.fen(), { movetime: settings.movetime }),
+                settings.movetime + 6000,
+                null
+            );
+            if (!uciMove) {
+                throw new Error('Stockfish did not return a move in time');
+            }
+            if (!boardStillMatches()) {
+                throw new Error('Board changed while Stockfish was thinking; discarding stale move');
+            }
+            move = game.move(uciToMoveObject(uciMove));
+        } catch (err) {
+            console.error('Stockfish move failed, falling back to the local engine:', err);
             try {
-                // Give the engine up to 20s to finish loading (first time only —
-                // the asm.js file can be slow to parse on weaker phones).
-                const ready = await withTimeout(StockfishEngine.init(), 20000, false);
-                if (!ready || !StockfishEngine.isAvailable()) {
-                    throw new Error('Stockfish unavailable or timed out while loading');
+                if (boardStillMatches()) {
+                    const localMove = getLocalEngineMove(difficulty === 'easy' ? 'easy' : 'medium');
+                    if (localMove) move = game.move(localMove);
                 }
-                if (!boardStillMatches()) {
-                    throw new Error('Board changed while Stockfish was loading; discarding stale request');
-                }
-                StockfishEngine.setSkillLevel(settings.skill);
-                // Give the search itself a bit more time than requested, then give up.
-                const uciMove = await withTimeout(
-                    StockfishEngine.getBestMove(game.fen(), { movetime: settings.movetime }),
-                    settings.movetime + 6000,
-                    null
-                );
-                if (!uciMove) {
-                    throw new Error('Stockfish did not return a move in time');
-                }
-                if (!boardStillMatches()) {
-                    throw new Error('Board changed while Stockfish was thinking; discarding stale move');
-                }
-                move = game.move(uciToMoveObject(uciMove));
-            } catch (err) {
-                console.error('Stockfish move failed, falling back to the local engine:', err);
-                try {
-                    if (boardStillMatches()) {
-                        const localMove = getLocalEngineMove('medium');
-                        if (localMove) move = game.move(localMove);
-                    }
-                } catch (err2) {
-                    console.error('Local engine fallback also failed:', err2);
-                }
+            } catch (err2) {
+                console.error('Local engine fallback also failed:', err2);
             }
         }
 
@@ -2879,41 +2867,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
    
-    // Function to provide a hint.
-    // HYBRID STRATEGY: easy/medium use the lightweight local engine (instant,
-    // no Stockfish download triggered). hard/expert lazy-load Stockfish for a
-    // stronger, more accurate hint.
+    // Function to provide a hint. Always uses Stockfish at full strength
+    // (lazy-loaded on first use) for the best possible suggestion, with the
+    // lightweight local engine as an automatic fallback if Stockfish fails.
     async function provideHint() {
         // Clear any previous hints
         clearHintVisualization();
 
-        const difficulty = userSettings.difficulty;
-
-        if (difficulty === 'easy' || difficulty === 'medium') {
-            let bestMove = null;
-            try {
-                bestMove = improvedNegamaxRoot(2000, 2);
-            } catch (err) {
-                console.error('Local engine hint failed:', err);
-            }
-
-            if (bestMove) {
-                const fromSquare = getSquareElement(bestMove.from);
-                const toSquare = getSquareElement(bestMove.to);
-                if (fromSquare) fromSquare.classList.add('hint-from');
-                if (toSquare) toSquare.classList.add('hint-to');
-                setTimeout(() => {
-                    clearHintVisualization();
-                    resumeTimer();
-                }, 3000);
-            } else {
-                showCustomAlert("No hint available for this position.");
-                resumeTimer();
-            }
-            return;
-        }
-
-        // hard / expert — lazy-load Stockfish for the strongest possible hint
+        // Lazy-load Stockfish for the strongest possible hint, regardless of difficulty
         let bestMoveUci = null;
         try {
             const ready = await withTimeout(StockfishEngine.init(), 20000, false);
@@ -3056,8 +3017,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 userSettings.difficulty = difficulties[currentIndex + 1];
                 updateAttemptsBasedOnDifficulty();
                 updateCurrentSettings();
-                if ((userSettings.difficulty === 'hard' || userSettings.difficulty === 'expert')
-                    && typeof StockfishEngine !== 'undefined') {
+                if (typeof StockfishEngine !== 'undefined') {
                     try {
                         StockfishEngine.init();
                     } catch (e) {
@@ -3259,11 +3219,10 @@ document.addEventListener('DOMContentLoaded', function() {
     initBoard();
     updateTranslations();
 
-    // If a returning player's last-used difficulty was hard/expert, start
-    // loading Stockfish now (while they're still on the welcome/menu pages)
-    // so it's likely already ready by the time they reach the board.
-    if ((userSettings.difficulty === 'hard' || userSettings.difficulty === 'expert')
-        && typeof StockfishEngine !== 'undefined') {
+    // Since every difficulty level now uses Stockfish, start loading it now
+    // (while the player is still on the welcome/menu pages) so it's likely
+    // already ready by the time they reach the board.
+    if (typeof StockfishEngine !== 'undefined') {
         try {
             StockfishEngine.init();
         } catch (e) {
