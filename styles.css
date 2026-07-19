@@ -416,23 +416,46 @@ body {
     color: #6a2fb0;
     font-weight: 600;
 }
-/* Pulses to grab attention once every feature is fully depleted, nudging
-   the player toward using the Pi payment refill. */
-@keyframes refillPulse {
+/* Grabs attention once every feature is fully depleted, nudging the player
+   toward using the Pi payment refill: the whole button glows/blinks, the
+   coin gently pulses, and the "Refill" label blinks on and off. */
+@keyframes refillButtonBlink {
+    0%, 100% {
+        background-color: transparent;
+        box-shadow: none;
+    }
+    50% {
+        background-color: rgba(130, 71, 229, 0.18);
+        box-shadow: 0 0 14px 4px rgba(130, 71, 229, 0.6);
+    }
+}
+@keyframes refillCoinPulse {
     0%, 100% {
         box-shadow: 0 0 0 0 rgba(130, 71, 229, 0.55);
         transform: scale(1);
     }
     50% {
         box-shadow: 0 0 0 10px rgba(130, 71, 229, 0);
-        transform: scale(1.08);
+        transform: scale(1.1);
     }
 }
+@keyframes refillTextBlink {
+    0%, 45% {
+        opacity: 1;
+    }
+    55%, 100% {
+        opacity: 0;
+    }
+}
+#refill-btn.attention {
+    animation: refillButtonBlink 1.2s ease-in-out infinite;
+    border-radius: 8px;
+}
 #refill-btn.attention .pi-coin-icon {
-    animation: refillPulse 1.4s ease-in-out infinite;
+    animation: refillCoinPulse 1.2s ease-in-out infinite;
 }
 #refill-btn.attention span {
-    animation: refillPulse 1.4s ease-in-out infinite;
+    animation: refillTextBlink 1.2s steps(1) infinite;
 }
 .modal {
     display: none;
