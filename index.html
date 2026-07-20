@@ -32,7 +32,7 @@
             <h2 class="page-title">Choose Your Board Theme</h2>
             <div class="options-container">
                 <div class="option-card selected" data-theme="brown">
-                    <i class="fas fa-chess-board option-icon"></i>
+                    <i class="fas fa-mug-hot option-icon"></i>
                     <div class="option-name">Brown</div>
                     <div class="option-desc">Classic Tan</div>
                 </div>
@@ -64,7 +64,7 @@
             <h2 class="page-title">Choose Difficulty Level</h2>
             <div class="options-container">
                 <div class="option-card" data-difficulty="easy">
-                    <i class="fas fa-baby option-icon"></i>
+                    <i class="fas fa-seedling option-icon"></i>
                     <div class="option-name">Easy</div>
                     <div class="option-desc">For Beginners</div>
                     <div class="difficulty-time-info">No time limit</div>
@@ -114,10 +114,10 @@
                         </div>
                         <div class="top-controls">
                             <div class="control-icon" id="advice-btn" role="button" tabindex="0" aria-label="Show advice">
-                                <i class="fas fa-clipboard-list"></i>
+                                <i class="fas fa-magnifying-glass-chart"></i>
                             </div>
                             <div class="control-icon" id="features-btn" role="button" tabindex="0" aria-label="Show help">
-                                <i class="fas fa-question-circle"></i>
+                                <i class="fas fa-circle-info"></i>
                             </div>
                         </div>
                     </div>
@@ -147,7 +147,7 @@
                             <div class="feature-count" id="hints-count">2</div>
                         </div>
                         <div class="control-icon" id="undo-btn" role="button" tabindex="0" aria-label="Undo last move">
-                            <i class="fas fa-undo"></i>
+                            <i class="fas fa-rotate-left"></i>
                             <span>Undo</span>
                             <div class="feature-count" id="undos-count">2</div>
                         </div>
@@ -157,7 +157,7 @@
                             <div class="feature-count" id="threats-count">2</div>
                         </div>
                         <div class="control-icon" id="extra-time-btn" role="button" tabindex="0" aria-label="Add extra time">
-                            <i class="fas fa-clock"></i>
+                            <i class="fas fa-stopwatch"></i>
                             <span>Time</span>
                             <div class="feature-count" id="extra-time-count">1</div>
                         </div>
@@ -181,7 +181,7 @@
                 <div class="features-content">
                     <div class="features-header">
                         <h2>Game Features Guide</h2>
-                        <span class="features-close">&times;</span>
+                        <span class="features-close"><i class="fas fa-xmark"></i></span>
                     </div>
                     <div class="features-section">
                         <h3> <i class="fas fa-lightbulb"></i> Hint Feature </h3>
@@ -195,7 +195,7 @@
 
                     </div>
                     <div class="features-section">
-                        <h3> <i class="fas fa-undo"></i> Undo Feature </h3>
+                        <h3> <i class="fas fa-rotate-left"></i> Undo Feature </h3>
                         <p>The Undo feature allows you to take back your last move. Each difficulty level gives you a different number of undos:</p>
                         <ul class="features-list">
                             <li> <strong>Easy:</strong> 1 undo available </li>
@@ -220,7 +220,7 @@
                         
                     </div>
                     <div class="features-section">
-                        <h3> <i class="fas fa-clock"></i> Extra Time Feature </h3>
+                        <h3> <i class="fas fa-stopwatch"></i> Extra Time Feature </h3>
                         <p>The Extra Time feature gives you additional time when you're running low. Each difficulty level gives you a different number of extra time uses:</p>
                         <ul class="features-list">
                             <li> <strong>Easy:</strong> No extra time available </li>
@@ -284,7 +284,7 @@
                 <div class="advice-content">
                     <div class="advice-header">
                         <h2>Threat Report</h2>
-                        <span class="advice-close">&times;</span>
+                        <span class="advice-close"><i class="fas fa-xmark"></i></span>
                     </div>
                     <div class="advice-section">
                         <div class="threat-info-header">
@@ -314,7 +314,7 @@
             <!-- Statistics Modal -->
             <div id="stats-modal" class="modal">
                 <div class="modal-content stats-content">
-                    <span class="close stats-close">&times;</span>
+                    <span class="close stats-close"><i class="fas fa-xmark"></i></span>
                     <h2>Game Statistics</h2>
                     
                     <div class="stats-tabs">
@@ -415,7 +415,7 @@
             <!-- Import PGN Modal -->
             <div id="import-pgn-modal" class="modal">
                 <div class="modal-content">
-                    <span class="close">&times;</span>
+                    <span class="close"><i class="fas fa-xmark"></i></span>
                     <h2>Import PGN</h2>
                     <textarea id="pgn-input" rows="5" style="width: 100%;"></textarea>
                     <input type="file" id="pgn-file" accept=".pgn">
@@ -448,7 +448,7 @@
             </div>
             <div id="surrender-modal" class="modal">
                 <div class="modal-content">
-                    <span class="close">&times;</span>
+                    <span class="close"><i class="fas fa-xmark"></i></span>
                     <h2>Confirm Surrender</h2>
                     <p>Are you sure you want to surrender?</p>
                     <button id="confirm-surrender" class="nav-button">Surrender</button>
@@ -459,10 +459,10 @@
         <!-- Navigation Arrows -->
         <div class="nav-arrows">
             <div class="nav-arrow left-arrow hidden">
-                <i class="fas fa-arrow-left"></i>
+                <i class="fas fa-chevron-left"></i>
             </div>
             <div class="nav-arrow right-arrow">
-                <i class="fas fa-arrow-right"></i>
+                <i class="fas fa-chevron-right"></i>
             </div>
         </div>
     </div>
