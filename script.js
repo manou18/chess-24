@@ -124,6 +124,139 @@ document.addEventListener('DOMContentLoaded', function() {
         extraTime: 1,
         soundMuted: false
     };
+
+    // ===================================================================
+    // PLAYER PROGRESS (unlocked levels/themes) — synced with the server via
+    // the player's Pi identity, so it follows them across devices instead
+    // of being tied to a single phone's local storage.
+    // ===================================================================
+    let playerProgress = {
+        unlockedLevels: ['easy'],
+        unlockedThemes: ['brown']
+    };
+    let piAccessToken = null;
+    let piUserUid = null;
+
+    // Local cache is used immediately on load (works offline / outside Pi
+    // Browser) and is overwritten once the server responds with the
+    // authoritative, account-linked version.
+    function loadPlayerProgressFromLocalCache() {
+        try {
+            const saved = localStorage.getItem('chessPiProgress');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                if (Array.isArray(parsed.unlockedLevels)) playerProgress.unlockedLevels = parsed.unlockedLevels;
+                if (Array.isArray(parsed.unlockedThemes)) playerProgress.unlockedThemes = parsed.unlockedThemes;
+            }
+        } catch (e) {
+            console.error('loadPlayerProgressFromLocalCache failed:', e);
+        }
+    }
+
+    function savePlayerProgressToLocalCache() {
+        try {
+            localStorage.setItem('chessPiProgress', JSON.stringify(playerProgress));
+        } catch (e) {
+            console.error('savePlayerProgressToLocalCache failed:', e);
+        }
+    }
+
+    // Merges newly-unlocked items into playerProgress (no duplicates),
+    // updates the local cache immediately, and syncs to the server in the
+    // background if we have a verified Pi identity.
+    function grantProgress({ levels = [], themes = [] } = {}) {
+        let changed = false;
+        levels.forEach((lvl) => {
+            if (!playerProgress.unlockedLevels.includes(lvl)) {
+                playerProgress.unlockedLevels.push(lvl);
+                changed = true;
+            }
+        });
+        themes.forEach((thm) => {
+            if (!playerProgress.unlockedThemes.includes(thm)) {
+                playerProgress.unlockedThemes.push(thm);
+                changed = true;
+            }
+        });
+        if (changed) {
+            savePlayerProgressToLocalCache();
+            syncProgressToServer();
+        }
+        return changed;
+    }
+
+    // Fetches the player's server-saved progress (requires a verified Pi
+    // identity) and merges it locally. Safe to call even if the player
+    // isn't authenticated yet — it just does nothing in that case.
+    async function fetchProgressFromServer() {
+        if (!piAccessToken) return;
+        try {
+            const response = await fetch('/.netlify/functions/get-progress', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ accessToken: piAccessToken }),
+                signal: AbortSignal.timeout(10000)
+            });
+            if (!response.ok) throw new Error('get-progress returned status ' + response.status);
+            const serverProgress = await response.json();
+
+            // Merge (union) with whatever we already have locally, so an
+            // unlock made offline/pre-login is never lost.
+            (serverProgress.unlockedLevels || []).forEach((lvl) => {
+                if (!playerProgress.unlockedLevels.includes(lvl)) playerProgress.unlockedLevels.push(lvl);
+            });
+            (serverProgress.unlockedThemes || []).forEach((thm) => {
+                if (!playerProgress.unlockedThemes.includes(thm)) playerProgress.unlockedThemes.push(thm);
+            });
+            savePlayerProgressToLocalCache();
+            console.log('Player progress loaded from server:', playerProgress);
+        } catch (err) {
+            console.error('fetchProgressFromServer failed (using local cache only):', err);
+        }
+    }
+
+    // Pushes the current local progress up to the server. Safe to call
+    // anytime; silently does nothing if we don't have a verified identity.
+    async function syncProgressToServer() {
+        if (!piAccessToken) return;
+        try {
+            const response = await fetch('/.netlify/functions/save-progress', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ accessToken: piAccessToken, progress: playerProgress }),
+                signal: AbortSignal.timeout(10000)
+            });
+            if (!response.ok) throw new Error('save-progress returned status ' + response.status);
+            const savedProgress = await response.json();
+            // Adopt the server's merged result as the new source of truth.
+            playerProgress = {
+                unlockedLevels: savedProgress.unlockedLevels || playerProgress.unlockedLevels,
+                unlockedThemes: savedProgress.unlockedThemes || playerProgress.unlockedThemes
+            };
+            savePlayerProgressToLocalCache();
+        } catch (err) {
+            console.error('syncProgressToServer failed (progress stays cached locally for now):', err);
+        }
+    }
+
+    // Silently authenticates with Pi (if available) and pulls the player's
+    // saved progress. Wrapped so it never blocks or breaks the game if Pi
+    // Browser isn't available (e.g. testing in a regular browser) or the
+    // player declines the permission prompt.
+    async function initializePiIdentityAndProgress() {
+        loadPlayerProgressFromLocalCache(); // instant, works offline
+        try {
+            if (typeof Pi === 'undefined') return; // not running inside Pi Browser
+            const auth = await Pi.authenticate(['payments'], resolveIncompletePayment);
+            if (auth && auth.accessToken && auth.user) {
+                piAccessToken = auth.accessToken;
+                piUserUid = auth.user.uid;
+                await fetchProgressFromServer();
+            }
+        } catch (err) {
+            console.error('Pi identity init failed (continuing with local progress only):', err);
+        }
+    }
    
     // Statistics variables
     let gameStats = {
@@ -495,6 +628,11 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch (e) {
         console.error('Pi.init failed:', e);
     }
+
+    // Start syncing the player's account-linked progress in the background.
+    // This never blocks the game — it uses the local cache immediately and
+    // upgrades to the server's version whenever it's ready.
+    initializePiIdentityAndProgress();
 
     // Called by the Pi SDK if it finds a payment from a previous session
     // that was never finished. Without resolving it here, Pi Network will
@@ -1657,6 +1795,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 square.dataset.col = col;
                 square.tabIndex = 0; // For keyboard accessibility
                 square.setAttribute('role', 'button');
+
+                // Chess.com-style board coordinates: rank numbers (8→1) down
+                // the left edge, file letters (a→h) along the bottom edge.
+                if (col === 0) {
+                    square.dataset.rank = 8 - row;
+                }
+                if (row === 7) {
+                    square.dataset.file = String.fromCharCode(97 + col);
+                }
                
                 // Add click and keydown events
                 square.addEventListener('click', () => handleSquareClick(row, col));
