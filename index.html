@@ -36,17 +36,20 @@
                     <div class="option-name">Brown</div>
                     <div class="option-desc">Classic Tan</div>
                 </div>
-                <div class="option-card" data-theme="green">
+                <div class="option-card locked" data-theme="green">
+                    <div class="lock-overlay"><i class="fas fa-lock"></i></div>
                     <i class="fas fa-leaf option-icon"></i>
                     <div class="option-name">Green</div>
                     <div class="option-desc">Fresh Green</div>
                 </div>
-                <div class="option-card" data-theme="pink">
+                <div class="option-card locked" data-theme="pink">
+                    <div class="lock-overlay"><i class="fas fa-lock"></i></div>
                     <i class="fas fa-heart option-icon"></i>
                     <div class="option-name">Pink</div>
                     <div class="option-desc">Soft Rose</div>
                 </div>
-                <div class="option-card" data-theme="blue">
+                <div class="option-card locked" data-theme="blue">
+                    <div class="lock-overlay"><i class="fas fa-lock"></i></div>
                     <i class="fas fa-water option-icon"></i>
                     <div class="option-name">Blue</div>
                     <div class="option-desc">Pillow Style</div>
@@ -63,28 +66,31 @@
         <div class="page difficulty-page">
             <h2 class="page-title">Choose Difficulty Level</h2>
             <div class="options-container">
-                <div class="option-card" data-difficulty="easy">
+                <div class="option-card selected" data-difficulty="easy">
                     <i class="fas fa-seedling option-icon"></i>
                     <div class="option-name">Easy</div>
                     <div class="option-desc">For Beginners</div>
                     <div class="difficulty-time-info">No time limit</div>
                     <div class="difficulty-time-info">No extra time</div>
                 </div>
-                <div class="option-card selected" data-difficulty="medium">
+                <div class="option-card locked" data-difficulty="medium">
+                    <div class="lock-overlay"><i class="fas fa-lock"></i></div>
                     <i class="fas fa-user option-icon"></i>
                     <div class="option-name">Medium</div>
                     <div class="option-desc">Casual Play</div>
                     <div class="difficulty-time-info">15 min</div>
                     <div class="difficulty-time-info">1 extra time (1 min)</div>
                 </div>
-                <div class="option-card" data-difficulty="hard">
+                <div class="option-card locked" data-difficulty="hard">
+                    <div class="lock-overlay"><i class="fas fa-lock"></i></div>
                     <i class="fas fa-robot option-icon"></i>
                     <div class="option-name">Hard</div>
                     <div class="option-desc">Challenge</div>
                     <div class="difficulty-time-info">10 min</div>
                     <div class="difficulty-time-info">1 extra time (1 min)</div>
                 </div>
-                <div class="option-card" data-difficulty="expert">
+                <div class="option-card locked" data-difficulty="expert">
+                    <div class="lock-overlay"><i class="fas fa-lock"></i></div>
                     <i class="fas fa-brain option-icon"></i>
                     <div class="option-name">Expert</div>
                     <div class="option-desc">For Masters</div>
@@ -453,6 +459,19 @@
                     <p>Are you sure you want to surrender?</p>
                     <button id="confirm-surrender" class="nav-button">Surrender</button>
                     <button id="cancel-surrender" class="nav-button">Cancel</button>
+                </div>
+            </div>
+            <div id="unlock-modal" class="modal">
+                <div class="modal-content unlock-modal-content">
+                    <span class="close"><i class="fas fa-xmark"></i></span>
+                    <div class="unlock-lock-icon"><i class="fas fa-lock"></i></div>
+                    <h2 id="unlock-modal-title">Locked</h2>
+                    <p id="unlock-modal-desc">This item is locked.</p>
+                    <button id="unlock-pay-btn" class="nav-button unlock-pay-btn">
+                        <div class="pi-coin-icon-small">π</div>
+                        <span id="unlock-price-text">Unlock for 10 π</span>
+                    </button>
+                    <button id="unlock-cancel-btn" class="nav-button unlock-cancel-btn">Maybe Later</button>
                 </div>
             </div>
         </div>
