@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let userSettings = {
         language: 'en',
         theme: 'brown',
-        difficulty: 'medium',
+        difficulty: 'easy',
         hints: 1,
         undos: 1,
         threats: 1,
@@ -161,6 +161,51 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // ===================================================================
+    // LOCK SYSTEM: only Easy (level) and Brown (theme) are open by default.
+    // Levels unlock sequentially by beating the previous one, OR instantly
+    // via a 10 Pi payment. Themes only unlock via a 10 Pi payment.
+    // ===================================================================
+    const LEVEL_SEQUENCE = ['easy', 'medium', 'hard', 'expert'];
+    const LOCKABLE_THEMES = ['green', 'pink', 'blue'];
+    const UNLOCK_PRICE_PI = 10;
+
+    function isLevelUnlocked(level) {
+        return playerProgress.unlockedLevels.includes(level);
+    }
+    function isThemeUnlocked(theme) {
+        return playerProgress.unlockedThemes.includes(theme);
+    }
+    function getNextLevel(currentLevel) {
+        const idx = LEVEL_SEQUENCE.indexOf(currentLevel);
+        if (idx === -1 || idx === LEVEL_SEQUENCE.length - 1) return null;
+        return LEVEL_SEQUENCE[idx + 1];
+    }
+
+    // Refreshes the lock icon/dimming on every difficulty & theme card to
+    // match the current playerProgress. Safe to call anytime (page load,
+    // after a payment, after a win, after the server sync resolves, etc.).
+    function renderLockState() {
+        document.querySelectorAll('.option-card[data-difficulty]').forEach((card) => {
+            const level = card.getAttribute('data-difficulty');
+            card.classList.toggle('locked', !isLevelUnlocked(level));
+        });
+        document.querySelectorAll('.option-card[data-theme]').forEach((card) => {
+            const theme = card.getAttribute('data-theme');
+            card.classList.toggle('locked', !isThemeUnlocked(theme));
+        });
+
+        // Safety net: if the currently-selected difficulty somehow isn't
+        // unlocked (e.g. stale saved settings), fall back to Easy so the
+        // player can never get stuck on a locked level.
+        if (!isLevelUnlocked(userSettings.difficulty)) {
+            userSettings.difficulty = 'easy';
+        }
+        if (!isThemeUnlocked(userSettings.theme)) {
+            userSettings.theme = 'brown';
+        }
+    }
+
     // Merges newly-unlocked items into playerProgress (no duplicates),
     // updates the local cache immediately, and syncs to the server in the
     // background if we have a verified Pi identity.
@@ -181,6 +226,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (changed) {
             savePlayerProgressToLocalCache();
             syncProgressToServer();
+            renderLockState();
         }
         return changed;
     }
@@ -209,6 +255,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (!playerProgress.unlockedThemes.includes(thm)) playerProgress.unlockedThemes.push(thm);
             });
             savePlayerProgressToLocalCache();
+            renderLockState();
             console.log('Player progress loaded from server:', playerProgress);
         } catch (err) {
             console.error('fetchProgressFromServer failed (using local cache only):', err);
@@ -234,6 +281,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 unlockedThemes: savedProgress.unlockedThemes || playerProgress.unlockedThemes
             };
             savePlayerProgressToLocalCache();
+            renderLockState();
         } catch (err) {
             console.error('syncProgressToServer failed (progress stays cached locally for now):', err);
         }
@@ -245,6 +293,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // player declines the permission prompt.
     async function initializePiIdentityAndProgress() {
         loadPlayerProgressFromLocalCache(); // instant, works offline
+        renderLockState();
         try {
             if (typeof Pi === 'undefined') return; // not running inside Pi Browser
             const auth = await Pi.authenticate(['payments'], resolveIncompletePayment);
@@ -421,13 +470,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const themeOptions = document.querySelectorAll('.theme-page .option-card');
     themeOptions.forEach(option => {
         option.addEventListener('click', function() {
+            const clickedTheme = this.getAttribute('data-theme');
+
+            if (this.classList.contains('locked')) {
+                showUnlockModal('theme', clickedTheme);
+                return;
+            }
+
             this.classList.add('clicked');
             setTimeout(() => {
                 this.classList.remove('clicked');
             }, 300);
             themeOptions.forEach(opt => opt.classList.remove('selected'));
             this.classList.add('selected');
-            userSettings.theme = this.getAttribute('data-theme');
+            userSettings.theme = clickedTheme;
             updateCurrentSettings();
             applyTheme(userSettings.theme);
             setTimeout(() => {
@@ -440,13 +496,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const difficultyOptions = document.querySelectorAll('.difficulty-page .option-card');
     difficultyOptions.forEach(option => {
         option.addEventListener('click', function() {
+            const clickedDifficulty = this.getAttribute('data-difficulty');
+
+            if (this.classList.contains('locked')) {
+                showUnlockModal('level', clickedDifficulty);
+                return;
+            }
+
             this.classList.add('clicked');
             setTimeout(() => {
                 this.classList.remove('clicked');
             }, 300);
             difficultyOptions.forEach(opt => opt.classList.remove('selected'));
             this.classList.add('selected');
-            userSettings.difficulty = this.getAttribute('data-difficulty');
+            userSettings.difficulty = clickedDifficulty;
             updateAttemptsBasedOnDifficulty();
             updateCurrentSettings();
             checkRefillButtonState();
@@ -777,6 +840,124 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 showCustomAlert("You can only use Refill when all features are depleted.");
             }
+        });
+    }
+
+    // ===================================================================
+    // UNLOCK MODAL (paying 10 Pi to unlock a locked level or theme)
+    // ===================================================================
+    const UNLOCK_DISPLAY_NAMES = {
+        medium: 'Medium', hard: 'Hard', expert: 'Expert',
+        green: 'Green', pink: 'Pink', blue: 'Blue'
+    };
+    let pendingUnlock = null; // { type: 'level' | 'theme', name: string }
+
+    function showUnlockModal(type, name) {
+        pendingUnlock = { type, name };
+        const modal = document.getElementById('unlock-modal');
+        const title = document.getElementById('unlock-modal-title');
+        const desc = document.getElementById('unlock-modal-desc');
+        const priceText = document.getElementById('unlock-price-text');
+        if (!modal || !title || !desc || !priceText) return;
+
+        const displayName = UNLOCK_DISPLAY_NAMES[name] || name;
+        if (type === 'level') {
+            title.textContent = `${displayName} Difficulty is Locked`;
+            desc.textContent = `Beat the previous level to unlock ${displayName} for free, or unlock it instantly with Pi.`;
+        } else {
+            title.textContent = `${displayName} Theme is Locked`;
+            desc.textContent = `Unlock the ${displayName} board theme instantly with Pi.`;
+        }
+        priceText.textContent = `Unlock for ${UNLOCK_PRICE_PI} \u03C0`;
+
+        modal.style.display = 'block';
+    }
+
+    async function processUnlockPayment() {
+        if (!pendingUnlock) return;
+        const { type, name } = pendingUnlock;
+        const displayName = UNLOCK_DISPLAY_NAMES[name] || name;
+
+        try {
+            await authenticate();
+
+            const paymentData = {
+                amount: UNLOCK_PRICE_PI,
+                memo: `Unlock ${displayName} ${type}`,
+                metadata: { productId: `unlock_${type}_${name}` }
+            };
+
+            const callbacks = {
+                onReadyForServerApproval: async function(paymentId) {
+                    console.log('Unlock onReadyForServerApproval:', paymentId);
+                    try {
+                        const response = await fetch('/.netlify/functions/approve', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ paymentId }),
+                            signal: AbortSignal.timeout(10000)
+                        });
+                        if (!response.ok) throw new Error('Approval failed');
+                    } catch (error) {
+                        console.error('Unlock approval error:', error);
+                        showCustomAlert('Approval failed: ' + error.message);
+                    }
+                },
+                onReadyForServerCompletion: async function(paymentId, txid) {
+                    console.log('Unlock onReadyForServerCompletion:', paymentId, txid);
+                    try {
+                        const response = await fetch('/.netlify/functions/complete', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ paymentId, txid }),
+                            signal: AbortSignal.timeout(10000)
+                        });
+                        if (!response.ok) throw new Error('Completion failed');
+
+                        if (type === 'level') {
+                            grantProgress({ levels: [name] });
+                        } else {
+                            grantProgress({ themes: [name] });
+                        }
+
+                        const modal = document.getElementById('unlock-modal');
+                        if (modal) modal.style.display = 'none';
+                        showCustomAlert(`${displayName} unlocked! Enjoy.`);
+                    } catch (error) {
+                        console.error('Unlock completion error:', error);
+                        showCustomAlert('Completion failed: ' + error.message);
+                    }
+                },
+                onCancel: function(paymentId) {
+                    console.log('Unlock payment canceled:', paymentId);
+                    showCustomAlert('Payment canceled.');
+                },
+                onError: function(error, payment) {
+                    console.error('Unlock payment error:', error, payment);
+                    showCustomAlert('Payment error: ' + error.message);
+                }
+            };
+
+            Pi.createPayment(paymentData, callbacks);
+        } catch (error) {
+            console.error('Unlock authentication error:', error);
+            showCustomAlert('Authentication failed: ' + error.message);
+        }
+    }
+
+    const unlockPayBtnEl = document.getElementById('unlock-pay-btn');
+    if (unlockPayBtnEl) {
+        unlockPayBtnEl.addEventListener('click', function() {
+            processUnlockPayment();
+        });
+    }
+
+    const unlockCancelBtnEl = document.getElementById('unlock-cancel-btn');
+    if (unlockCancelBtnEl) {
+        unlockCancelBtnEl.addEventListener('click', function() {
+            const modal = document.getElementById('unlock-modal');
+            if (modal) modal.style.display = 'none';
+            pendingUnlock = null;
         });
     }
    
@@ -1571,6 +1752,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 nextLevelBtn.style.display = 'none';
             }
         }
+
+        // Beating a level permanently unlocks the next one (free progression
+        // path, alongside the option to pay with Pi to skip ahead).
+        if (actualIsWin) {
+            const unlockedNext = getNextLevel(userSettings.difficulty);
+            if (unlockedNext) {
+                grantProgress({ levels: [unlockedNext] });
+            }
+        }
         
         if (gameOverModal) gameOverModal.style.display = 'block';
         
@@ -1751,7 +1941,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const themeMigration = { classic: 'brown', space: 'blue', marble: 'green', metal: 'pink' };
                 const migratedTheme = themeMigration[parsed.theme] || parsed.theme;
                 userSettings.theme = ['brown', 'green', 'pink', 'blue'].includes(migratedTheme) ? migratedTheme : 'brown';
-                userSettings.difficulty = ['easy', 'medium', 'hard', 'expert'].includes(parsed.difficulty) ? parsed.difficulty : 'medium';
+                userSettings.difficulty = ['easy', 'medium', 'hard', 'expert'].includes(parsed.difficulty) ? parsed.difficulty : 'easy';
                 userSettings.soundMuted = !!parsed.soundMuted;
                 isMuted = userSettings.soundMuted;
                 updateMuteIcon();
@@ -2062,11 +2252,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const squareElement = document.querySelector(`.square[data-row="${row}"][data-col="${col}"]`);
            
             if (squareElement) {
+                const marker = document.createElement('div');
                 if (move.captured) {
                     squareElement.classList.add('capture-move');
+                    marker.className = 'move-marker capture-marker';
                 } else {
                     squareElement.classList.add('valid-move');
+                    marker.className = 'move-marker valid-marker';
                 }
+                squareElement.appendChild(marker);
             }
         });
        
@@ -2089,6 +2283,7 @@ document.addEventListener('DOMContentLoaded', function() {
             sq.classList.remove('valid-move');
             sq.classList.remove('capture-move');
         });
+        document.querySelectorAll('.move-marker').forEach(marker => marker.remove());
        
         validMoves = [];
     }
