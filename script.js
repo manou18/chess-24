@@ -1744,9 +1744,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (gameResultTitle) gameResultTitle.textContent = "Game Over";
         if (gameResultMessage) gameResultMessage.textContent = message;
         
-        // Show next level button if win and not expert
+        // Show next level button if win and not expert (imported-game wins
+        // don't count — no legitimate next level to jump to)
         if (nextLevelBtn) {
-            if (actualIsWin && userSettings.difficulty !== 'expert') {
+            if (actualIsWin && !isImported && userSettings.difficulty !== 'expert') {
                 nextLevelBtn.style.display = 'inline-block';
             } else {
                 nextLevelBtn.style.display = 'none';
@@ -1755,7 +1756,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Beating a level permanently unlocks the next one (free progression
         // path, alongside the option to pay with Pi to skip ahead).
-        if (actualIsWin) {
+        // IMPORTANT: imported PGN games never count — otherwise someone could
+        // import an already-won game to unlock levels for free without
+        // actually beating the bot.
+        if (actualIsWin && !isImported) {
             const unlockedNext = getNextLevel(userSettings.difficulty);
             if (unlockedNext) {
                 grantProgress({ levels: [unlockedNext] });
@@ -3406,7 +3410,18 @@ document.addEventListener('DOMContentLoaded', function() {
             const currentIndex = difficulties.indexOf(userSettings.difficulty);
            
             if (currentIndex < difficulties.length - 1) {
-                userSettings.difficulty = difficulties[currentIndex + 1];
+                const nextDifficulty = difficulties[currentIndex + 1];
+
+                // Defense-in-depth: never advance to a level that isn't
+                // actually unlocked, no matter how this got triggered.
+                if (!isLevelUnlocked(nextDifficulty)) {
+                    const gameOverModal = document.getElementById('game-over-modal');
+                    if (gameOverModal) gameOverModal.style.display = 'none';
+                    showUnlockModal('level', nextDifficulty);
+                    return;
+                }
+
+                userSettings.difficulty = nextDifficulty;
                 updateAttemptsBasedOnDifficulty();
                 updateCurrentSettings();
                 if (typeof StockfishEngine !== 'undefined') {
