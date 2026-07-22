@@ -1706,7 +1706,7 @@ html.device-desktop .game-container {
     flex-grow: 0;
     display: grid;
     grid-template-columns: var(--board-size) calc(var(--board-size) * 0.22);
-    grid-template-rows: auto auto auto var(--board-size) auto;
+    grid-template-rows: auto auto auto minmax(var(--board-size), auto) auto;
     column-gap: clamp(16px, 2vw, 32px);
     row-gap: 10px;
     justify-content: center;
@@ -1766,8 +1766,10 @@ html.device-desktop .controls-bottom {
     flex-wrap: nowrap;
     justify-content: space-evenly;
     align-items: center;
+    align-self: start;
     width: 100%;
-    height: var(--board-size);
+    height: auto;
+    min-height: var(--board-size);
     margin: 0;
     padding: calc(var(--board-size) * 0.02) calc(var(--board-size) * 0.01);
     gap: calc(var(--board-size) * 0.01);
