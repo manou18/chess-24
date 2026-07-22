@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function setAppHeight() {
         const appContainer = document.querySelector('.app-container');
         if (appContainer) {
-            appContainer.style.height = `${window.innerHeight}px`;
+            appContainer.style.minHeight = `${window.innerHeight}px`;
         }
     }
 
