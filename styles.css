@@ -82,11 +82,6 @@ body {
     width: 200px;
     height: auto;
     margin-bottom: 20px;
-    padding: 18px;
-    box-sizing: border-box;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(35, 22, 15, 0.9) 0%, rgba(35, 22, 15, 0.55) 65%, rgba(35, 22, 15, 0) 100%);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
 }
 .welcome-title {
     font-size: 3.5rem;
