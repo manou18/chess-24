@@ -223,7 +223,11 @@ body {
     transform: scale(1.2);
 }
 .game-page {
-    background: linear-gradient(135deg, #87ceeb, #b0e2ff, #87ceeb);
+    background-color: #3a2317;
+    background-image: url('board-bg.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     color: #333;
     display: flex;
     flex-direction: column;
